@@ -1,4 +1,4 @@
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jdk-focal
 WORKDIR /app
 ARG JAR_FILE=build/libs/synclog-0.0.1-SNAPSHOT.jar
 COPY ${JAR_FILE} app.jar

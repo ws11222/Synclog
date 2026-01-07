@@ -41,6 +41,7 @@ jobs:
           DB_URL: ${{ secrets.DB_URL }}          
           DB_USERNAME: ${{ secrets.DB_USERNAME }} 
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }} 
+          HOST_PROD: ${{ secrets.HOST_PROD }}
         run: |
           ./gradlew test
           ./gradlew build -x test

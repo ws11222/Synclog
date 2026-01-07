@@ -34,6 +34,7 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("org.springframework.ai:spring-ai-starter-vector-store-pgvector")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.1")
     runtimeOnly("org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")

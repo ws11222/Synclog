@@ -13,7 +13,7 @@
             return;
         }
 
-        const url = "http://52.78.16.144:8080/api/auth/signup";
+        const url = "/api/auth/signup";
         isProcessing = true;
 
         try{

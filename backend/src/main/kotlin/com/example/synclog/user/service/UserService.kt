@@ -39,7 +39,7 @@ class UserService(
     fun login(requestDto: LoginRequest): AuthResponse {
         val user = userRepository.findByEmail(requestDto.email) ?: throw UserNotFoundException()
         if (!BCrypt.checkpw(requestDto.password, user.password)) throw LoginInvalidPasswordException()
-        val accessToken = jwtProvider.generateToken(requestDto.email)
+        val accessToken = jwtProvider.generateToken(user.id!!)
         return AuthResponse(accessToken)
     }
 }

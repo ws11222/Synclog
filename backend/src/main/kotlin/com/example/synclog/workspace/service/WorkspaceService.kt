@@ -1,6 +1,7 @@
 package com.example.synclog.workspace.service
 
 import com.example.synclog.common.exception.UserNotFoundException
+import com.example.synclog.document.controller.DocumentSimpleResponse
 import com.example.synclog.user.persistence.UserRepository
 import com.example.synclog.workspace.controller.CreateWorkspaceRequest
 import com.example.synclog.workspace.controller.WorkspaceResponse
@@ -23,7 +24,6 @@ class WorkspaceService(
         userId: String,
         requestDTO: CreateWorkspaceRequest,
     ): WorkspaceResponse {
-        println("DEBUG: Looking for User with ID = [$userId]")
         val user = userRepository.findById(userId).orElseThrow { UserNotFoundException() }
 
         val workspace = workspaceRepository.save(Workspace(title = requestDTO.title))
@@ -35,5 +35,20 @@ class WorkspaceService(
             )
         workspaceMemberRepository.save(workspaceMember)
         return WorkspaceResponse.fromEntity(workspace)
+    }
+
+    @Transactional
+    fun getWorkspaces(userId: String): List<WorkspaceResponse> {
+        val memberships = workspaceMemberRepository.findAllByUserIdWithWorkspace(userId)
+        return memberships.map { member ->
+            val workspace = member.workspace
+            WorkspaceResponse(
+                id = workspace.id!!,
+                title = workspace.title,
+                memberCount = workspace.members.size,
+                documentCount = workspace.documents.size,
+                documents = workspace.documents.map { document -> DocumentSimpleResponse.fromEntity(document) },
+            )
+        }
     }
 }

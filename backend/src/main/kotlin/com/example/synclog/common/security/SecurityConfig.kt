@@ -2,6 +2,7 @@ package com.example.synclog.common.security
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -23,6 +24,7 @@ class SecurityConfig(
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
+                auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // 허용할 경로들을 여기서 정의
                 auth.requestMatchers(
                     "/api/auth/**",

@@ -14,7 +14,7 @@ class UserController(
 ) {
     @PostMapping("/auth/signup")
     fun signUp(
-        @RequestBody requestDto: AuthRequest,
+        @RequestBody requestDto: SignupRequest,
     ): ResponseEntity<AuthResponse> {
         val response = userService.signUp(requestDto)
         return ResponseEntity.ok(response)
@@ -22,7 +22,7 @@ class UserController(
 
     @PostMapping("/auth/login")
     fun login(
-        @RequestBody requestDto: AuthRequest,
+        @RequestBody requestDto: LoginRequest,
     ): ResponseEntity<AuthResponse> {
         val response = userService.login(requestDto)
         return ResponseEntity.ok(response)

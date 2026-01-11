@@ -12,3 +12,13 @@ class WorkspaceNotFoundException : WorkspaceException(
     code = HttpStatus.NOT_FOUND,
     message = "Workspace not found",
 )
+
+class MemberNotFoundException : WorkspaceException(
+    code = HttpStatus.NOT_FOUND,
+    message = "user not belongs to workspace",
+)
+
+class NotEnoughRoleException : WorkspaceException(
+    code = HttpStatus.FORBIDDEN,
+    message = "This user doesn't have enough role",
+)

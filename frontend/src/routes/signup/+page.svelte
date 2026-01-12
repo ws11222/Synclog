@@ -12,8 +12,10 @@
             alert("이름, 이메일, 비밀번호를 모두 입력해주세요.");
             return;
         }
+        // const url = "http://52.78.16.144:8080/api/auth/signup";
+        // const url = "/api/auth/signup";
+        const url = "https://api.synclog.shop/api/auth/signup"
 
-        const url = "/api/auth/signup";
         isProcessing = true;
 
         try{

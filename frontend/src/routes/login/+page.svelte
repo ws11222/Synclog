@@ -12,7 +12,8 @@
             return;
         }
         // const url = "http://52.78.16.144:8080/api/auth/signup";
-        const url = "/api/auth/login";
+        // const url = "/api/auth/login";
+        const url = "https://api.synclog.shop/api/auth/login"
         isProcessing = true;
 
         try{

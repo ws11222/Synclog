@@ -32,7 +32,7 @@ class UserService(
             )
 
         val accessToken = jwtProvider.generateToken(user.id!!)
-        return AuthResponse(accessToken)
+        return AuthResponse(accessToken, user.name)
     }
 
     @Transactional
@@ -40,6 +40,6 @@ class UserService(
         val user = userRepository.findByEmail(requestDto.email) ?: throw UserNotFoundException()
         if (!BCrypt.checkpw(requestDto.password, user.password)) throw LoginInvalidPasswordException()
         val accessToken = jwtProvider.generateToken(user.id!!)
-        return AuthResponse(accessToken)
+        return AuthResponse(accessToken, user.name)
     }
 }

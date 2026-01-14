@@ -13,4 +13,5 @@ data class SignupRequest(
 
 data class AuthResponse(
     val accessToken: String,
+    val name: String,
 )

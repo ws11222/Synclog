@@ -48,7 +48,7 @@ class SecurityConfig(
             listOf(
                 System.getenv("HOST_PROD"),
                 "https://www.synclog.shop",
-                "http://localhost:5174",
+                "http://localhost:5175",
             )
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
         configuration.allowedHeaders = listOf("*")

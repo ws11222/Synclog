@@ -19,8 +19,17 @@ data class DocumentSimpleResponse(
     }
 }
 
-data class DocumentResponse(
-    val id: Long,
+data class DocumentMetadataResponse(
+    val documentId: Long,
     val title: String,
-    val content: String,
+    val workspaceName: String,
+)
+
+data class DocumentTitleRequest(
+    val title: String,
+)
+
+data class DocumentSnapshotRequest(
+    val plainText: String,
+    val fullBinary: ByteArray,
 )

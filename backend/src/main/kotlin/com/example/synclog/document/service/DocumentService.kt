@@ -1,8 +1,12 @@
 package com.example.synclog.document.service
 
+import com.example.synclog.common.exception.DocumentNotFoundException
 import com.example.synclog.common.exception.WorkspaceNotFoundException
+import com.example.synclog.document.controller.DocumentMetadataResponse
 import com.example.synclog.document.controller.DocumentSimpleResponse
+import com.example.synclog.document.controller.DocumentTitleRequest
 import com.example.synclog.document.persistence.Document
+import com.example.synclog.document.persistence.DocumentContentRepository
 import com.example.synclog.document.persistence.DocumentRepository
 import com.example.synclog.workspace.persistence.WorkspaceRepository
 import org.springframework.stereotype.Service
@@ -12,6 +16,7 @@ import java.time.LocalDateTime
 @Service
 class DocumentService(
     private val documentRepository: DocumentRepository,
+    private val documentContentRepository: DocumentContentRepository,
     private val workspaceRepository: WorkspaceRepository,
 ) {
     @Transactional
@@ -27,5 +32,45 @@ class DocumentService(
                 ),
             )
         return DocumentSimpleResponse.fromEntity(document)
+    }
+
+    @Transactional
+    fun saveFullSnapshot(
+        docId: Long,
+        text: String,
+        fullBinary: ByteArray,
+    ) {
+        val document = documentRepository.findById(docId).orElseThrow { DocumentNotFoundException() }
+        document.updatedAt = LocalDateTime.now()
+        val content = documentContentRepository.findById(docId).orElseThrow { DocumentNotFoundException() }
+
+        content.plainText = text
+        content.yjsBinary = fullBinary
+        documentContentRepository.save(content)
+    }
+
+    @Transactional
+    fun getMetadata(documentId: Long): DocumentMetadataResponse {
+        val document = documentRepository.findById(documentId).orElseThrow { DocumentNotFoundException() }
+        return DocumentMetadataResponse(
+            documentId = document.id!!,
+            title = document.title,
+            workspaceName = document.workspace.title,
+        )
+    }
+
+    @Transactional
+    fun updateTitle(
+        documentId: Long,
+        request: DocumentTitleRequest,
+    ): DocumentMetadataResponse {
+        val document = documentRepository.findById(documentId).orElseThrow { DocumentNotFoundException() }
+        document.title = request.title
+        document.updatedAt = LocalDateTime.now()
+        return DocumentMetadataResponse(
+            documentId = document.id!!,
+            title = document.title,
+            workspaceName = document.workspace.title,
+        )
     }
 }

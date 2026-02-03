@@ -28,5 +28,6 @@ class Document(
 ) {
     init {
         workspace.documents.add(this)
+        this.content = DocumentContent(document = this)
     }
 }

@@ -6,6 +6,7 @@ import com.example.synclog.document.controller.DocumentMetadataResponse
 import com.example.synclog.document.controller.DocumentSimpleResponse
 import com.example.synclog.document.controller.DocumentTitleRequest
 import com.example.synclog.document.persistence.Document
+import com.example.synclog.document.persistence.DocumentContent
 import com.example.synclog.document.persistence.DocumentContentRepository
 import com.example.synclog.document.persistence.DocumentRepository
 import com.example.synclog.workspace.persistence.WorkspaceRepository
@@ -42,7 +43,13 @@ class DocumentService(
     ) {
         val document = documentRepository.findById(docId).orElseThrow { DocumentNotFoundException() }
         document.updatedAt = LocalDateTime.now()
-        val content = documentContentRepository.findById(docId).orElseThrow { DocumentNotFoundException() }
+        val content =
+            documentContentRepository.findById(docId)
+                .orElseGet {
+                    val newContent = DocumentContent(document = document)
+                    document.content = newContent
+                    newContent
+                }
 
         content.plainText = text
         content.yjsBinary = fullBinary

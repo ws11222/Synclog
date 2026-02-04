@@ -33,6 +33,7 @@ class SecurityConfig(
                     "/v3/api-docs/**",
                     "/swagger-resources/**",
                     "/webjars/**",
+                    "/ws/docs/**",
                 ).permitAll()
                 // 그 외 모든 요청은 인증 필요
                 auth.anyRequest().authenticated()

@@ -31,5 +31,5 @@ data class DocumentTitleRequest(
 
 data class DocumentSnapshotRequest(
     val plainText: String,
-    val fullBinary: ByteArray,
+    val fullBinary: String,
 )

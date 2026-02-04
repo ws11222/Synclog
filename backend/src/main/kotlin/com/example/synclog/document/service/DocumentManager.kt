@@ -42,7 +42,5 @@ class DocumentManager {
         return updates ?: emptyList()
     }
 
-    fun getBufferedBinary(docId: Long): ByteArray? = binaryBuffer[docId]?.last()
-
     fun getActiveDocIds() = binaryBuffer.keys().toList()
 }

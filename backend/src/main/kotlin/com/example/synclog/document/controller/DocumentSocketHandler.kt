@@ -20,10 +20,8 @@ class DocumentSocketHandler(
         val docId = getDocId(session)
         docManager.addSession(docId, session)
 
-        // 1. 캐시(메모리) 확인 -> 없으면 DB 확인
-        val initialState: ByteArray? =
-            docManager.getBufferedBinary(docId)
-                ?: documentContentRepository.findById(docId).getOrNull()?.yjsBinary
+        // 1. DB에서 full binary 가져오기
+        val initialState = documentContentRepository.findById(docId).getOrNull()?.yjsBinary
 
         // 2. 데이터가 있다면 클라이언트에게 전송
         if (initialState != null) {

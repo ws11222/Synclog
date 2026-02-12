@@ -55,7 +55,7 @@ jobs:
       # Docker 이미지 빌드 및 푸시
       - name: Docker build & push
         if: contains(github.ref, 'main')
-        working-directory: ./backend
+        working-directory: ./
         run: |
           docker build -f ./Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/synclog . --no-cache
           docker push ${{ secrets.DOCKER_USERNAME }}/synclog  

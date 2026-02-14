@@ -12,3 +12,8 @@ class DocumentNotFoundException : DocumentException(
     code = HttpStatus.NOT_FOUND,
     message = "Document not found",
 )
+
+class EmbedFailException : DocumentException(
+    code = HttpStatus.INTERNAL_SERVER_ERROR,
+    message = "Failed in Embedding process",
+)

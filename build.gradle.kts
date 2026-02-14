@@ -19,11 +19,14 @@ java {
 
 repositories {
     mavenCentral()
+    maven { url = uri("https://repo.spring.io/milestone") }
+    maven { url = uri("https://repo.spring.io/snapshot") }
 }
 
-extra["springAiVersion"] = "1.1.2"
+extra["springAiVersion"] = "1.0.0-M5"
 
 dependencies {
+    // Spring
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -33,10 +36,19 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-impl:0.11.5")
     implementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
     implementation("org.mindrot:jbcrypt:0.4")
-    implementation("org.springframework.ai:spring-ai-starter-vector-store-pgvector")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.1")
     implementation("org.springframework.boot:spring-boot-starter-websocket")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.1")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
+
+    // AI
+    implementation("org.springframework.ai:spring-ai-core")
+    implementation("org.springframework.ai:spring-ai-huggingface-spring-boot-starter")
+    implementation("org.springframework.ai:spring-ai-starter-vector-store-pgvector:1.0.0")
+
+    // DB
     runtimeOnly("org.postgresql:postgresql")
+
+    // Test
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.springframework.security:spring-security-test")

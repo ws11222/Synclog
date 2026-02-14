@@ -22,4 +22,6 @@ class DocumentContent(
     var plainText: String? = null,
     @Column(columnDefinition = "BYTEA")
     var yjsBinary: ByteArray? = null,
+    @Column(columnDefinition = "vector(1024)")
+    var embedding: FloatArray? = null,
 )

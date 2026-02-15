@@ -3,6 +3,7 @@ package com.example.synclog.document.service
 import com.example.synclog.common.exception.DocumentNotFoundException
 import com.example.synclog.common.exception.WorkspaceNotFoundException
 import com.example.synclog.document.controller.DocumentMetadataResponse
+import com.example.synclog.document.controller.DocumentRagResponse
 import com.example.synclog.document.controller.DocumentSimpleResponse
 import com.example.synclog.document.controller.DocumentTitleRequest
 import com.example.synclog.document.persistence.Document
@@ -11,6 +12,7 @@ import com.example.synclog.document.persistence.DocumentContentRepository
 import com.example.synclog.document.persistence.DocumentRepository
 import com.example.synclog.workspace.persistence.WorkspaceRepository
 import org.springframework.ai.embedding.EmbeddingModel
+import org.springframework.ai.huggingface.HuggingfaceChatModel
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -21,6 +23,7 @@ class DocumentService(
     private val documentContentRepository: DocumentContentRepository,
     private val workspaceRepository: WorkspaceRepository,
     private val embeddingModel: EmbeddingModel,
+    private val chatModel: HuggingfaceChatModel,
 ) {
     @Transactional
     fun createDocument(workspaceId: Long): DocumentSimpleResponse {
@@ -92,5 +95,38 @@ class DocumentService(
             title = document.title,
             workspaceName = document.workspace.title,
         )
+    }
+
+    @Transactional
+    fun rag(
+        documentId: Long,
+        request: String,
+    ): DocumentRagResponse {
+        val document = documentRepository.findById(documentId).orElseThrow { DocumentNotFoundException() }
+        val similarContents =
+            documentContentRepository.findSimilarContents(
+                document.workspace.id!!,
+                embeddingModel.embed(request),
+                3,
+            )
+
+        val context = similarContents.joinToString(separator = "\n\n") { it.plainText!! }
+
+        val prompt =
+            """
+            너는 회의록 분석 전문가야. 아래 제공된 [회의록 내용]을 바탕으로 사용자의 [질문]에 대해 답변해줘.
+            만약 답변을 위한 정보가 회의록 내용에 없다면, "관련 내용을 찾을 수 없습니다"라고 답해줘.
+            
+            [회의록 내용]
+            $context
+            
+            [질문]
+            $request
+            
+            답변:
+            """.trimIndent()
+
+        val response = chatModel.call(prompt)
+        return DocumentRagResponse(response)
     }
 }

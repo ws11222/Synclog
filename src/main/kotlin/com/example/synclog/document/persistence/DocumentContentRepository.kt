@@ -21,4 +21,20 @@ interface DocumentContentRepository : JpaRepository<DocumentContent, Long> {
         docId: Long,
         newUpdate: ByteArray,
     )
+
+    @Query(
+        value = """
+            SELECT dc.* FROM document_content dc
+            JOIN document d ON dc.document_id = d.id
+            WHERE d.workspace_id = :workspaceId
+            ORDER BY dc.embedding <=> CAST(:queryVector AS vector)
+            LIMIT :limit
+        """,
+        nativeQuery = true,
+    )
+    fun findSimilarContents(
+        workspaceId: Long,
+        queryVector: FloatArray,
+        limit: Int,
+    ): List<DocumentContent>
 }

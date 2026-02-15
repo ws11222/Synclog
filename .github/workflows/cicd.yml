@@ -42,6 +42,7 @@ jobs:
           DB_USERNAME: ${{ secrets.DB_USERNAME }} 
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }} 
           HOST_PROD: ${{ secrets.HOST_PROD }}
+          HF_API_KEY: ${{ secrets.HF_API_KEY }}
         run: |
           ./gradlew test
           ./gradlew build -x test
@@ -85,5 +86,6 @@ jobs:
               -e DB_URL='${{ secrets.DB_URL }}' \
               -e DB_USERNAME='${{ secrets.DB_USERNAME }}' \
               -e DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
+              -e HF_API_KEY='${{ secrets.HF_API_KEY }}' \
               ${{ secrets.DOCKER_USERNAME }}/synclog
             sudo docker system prune -a -f --volumes

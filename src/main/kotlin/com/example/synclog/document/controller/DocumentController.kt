@@ -55,4 +55,14 @@ class DocumentController(
         val metadata = documentService.updateTitle(documentId, request)
         return ResponseEntity.ok(metadata)
     }
+
+    @GetMapping("/{documentId}/rag")
+    fun ragDocument(
+        @RequestAttribute("userId") userId: String,
+        @PathVariable documentId: Long,
+        @RequestBody request: DocumentRagRequest,
+    ): ResponseEntity<DocumentRagResponse> {
+        val response = documentService.rag(documentId, request.request)
+        return ResponseEntity.ok(response)
+    }
 }

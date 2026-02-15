@@ -33,3 +33,11 @@ data class DocumentSnapshotRequest(
     val plainText: String,
     val fullBinary: String,
 )
+
+data class DocumentRagRequest(
+    val request: String,
+)
+
+data class DocumentRagResponse(
+    val response: String,
+)

@@ -11,7 +11,7 @@ class WebClientConfig {
     @Bean
     fun huggingFaceWebClinet(): WebClient {
         return WebClient.builder()
-            .baseUrl("https://router.huggingface.co/hf-inference")
+            .baseUrl("https://router.huggingface.co")
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build()
     }

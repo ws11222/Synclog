@@ -8,6 +8,9 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.MapsId
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.Array
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 
 @Entity
 @Table(name = "document_content")
@@ -22,6 +25,8 @@ class DocumentContent(
     var plainText: String? = null,
     @Column(columnDefinition = "BYTEA")
     var yjsBinary: ByteArray? = null,
-    @Column(columnDefinition = "vector(1024)")
+    @JdbcTypeCode(SqlTypes.VECTOR)
+    @Column(name = "embedding", columnDefinition = "vector(1024)")
+    @Array(length = 1024)
     var embedding: FloatArray? = null,
 )

@@ -22,7 +22,7 @@ class CustomEmbeddingModel(
             )
         val response =
             huggingFaceWebClinet.post()
-                .uri("/models/BAAI/bge-m3/pipeline/feature-extraction")
+                .uri("/hf-inference/models/BAAI/bge-m3/pipeline/feature-extraction")
                 .header("Authorization", "Bearer $apiKey")
                 .bodyValue(requestBody)
                 .retrieve()

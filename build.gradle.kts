@@ -42,11 +42,11 @@ dependencies {
 
     // AI
     implementation("org.springframework.ai:spring-ai-core")
-    implementation("org.springframework.ai:spring-ai-huggingface-spring-boot-starter")
-    implementation("org.springframework.ai:spring-ai-starter-vector-store-pgvector:1.0.0")
 
     // DB
+    implementation("com.pgvector:pgvector:0.1.6")
     runtimeOnly("org.postgresql:postgresql")
+    implementation("org.hibernate.orm:hibernate-vector:6.6.29.Final")
 
     // Test
     testImplementation("org.springframework.boot:spring-boot-starter-test")

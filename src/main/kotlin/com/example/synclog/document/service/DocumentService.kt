@@ -11,8 +11,9 @@ import com.example.synclog.document.persistence.DocumentContent
 import com.example.synclog.document.persistence.DocumentContentRepository
 import com.example.synclog.document.persistence.DocumentRepository
 import com.example.synclog.workspace.persistence.WorkspaceRepository
+import org.springframework.ai.chat.model.ChatModel
+import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.ai.embedding.EmbeddingModel
-import org.springframework.ai.huggingface.HuggingfaceChatModel
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -23,7 +24,7 @@ class DocumentService(
     private val documentContentRepository: DocumentContentRepository,
     private val workspaceRepository: WorkspaceRepository,
     private val embeddingModel: EmbeddingModel,
-    private val chatModel: HuggingfaceChatModel,
+    private val chatModel: ChatModel,
 ) {
     @Transactional
     fun createDocument(workspaceId: Long): DocumentSimpleResponse {
@@ -112,21 +113,23 @@ class DocumentService(
 
         val context = similarContents.joinToString(separator = "\n\n") { it.plainText!! }
 
-        val prompt =
-            """
-            너는 회의록 분석 전문가야. 아래 제공된 [회의록 내용]을 바탕으로 사용자의 [질문]에 대해 답변해줘.
-            만약 답변을 위한 정보가 회의록 내용에 없다면, "관련 내용을 찾을 수 없습니다"라고 답해줘.
-            
-            [회의록 내용]
-            $context
-            
-            [질문]
-            $request
-            
-            답변:
-            """.trimIndent()
+        val prompt: Prompt =
+            Prompt(
+                """
+                너는 회의록 분석 전문가야. 아래 제공된 [회의록 내용]을 바탕으로 사용자의 [질문]에 대해 답변해줘.
+                만약 답변을 위한 정보가 회의록 내용에 없다면, "관련 내용을 찾을 수 없습니다"라고 답해줘.
+                
+                [회의록 내용]
+                $context
+                
+                [질문]
+                $request
+                
+                답변:
+                """.trimIndent(),
+            )
 
         val response = chatModel.call(prompt)
-        return DocumentRagResponse(response)
+        return DocumentRagResponse(response.result.output.content)
     }
 }

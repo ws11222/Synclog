@@ -43,4 +43,9 @@ class DocumentManager {
     }
 
     fun getActiveDocIds() = binaryBuffer.keys().toList()
+
+    fun clearResource(docId: Long) {
+        sessionsMap.remove(docId)
+        binaryBuffer.remove(docId)
+    }
 }

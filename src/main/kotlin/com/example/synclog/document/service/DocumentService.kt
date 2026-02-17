@@ -1,6 +1,8 @@
 package com.example.synclog.document.service
 
 import com.example.synclog.common.exception.DocumentNotFoundException
+import com.example.synclog.common.exception.MemberNotFoundException
+import com.example.synclog.common.exception.NotEnoughRoleException
 import com.example.synclog.common.exception.WorkspaceNotFoundException
 import com.example.synclog.document.controller.DocumentMetadataResponse
 import com.example.synclog.document.controller.DocumentRagResponse
@@ -10,12 +12,15 @@ import com.example.synclog.document.persistence.Document
 import com.example.synclog.document.persistence.DocumentContent
 import com.example.synclog.document.persistence.DocumentContentRepository
 import com.example.synclog.document.persistence.DocumentRepository
+import com.example.synclog.workspace.controller.WorkspaceRole
+import com.example.synclog.workspace.persistence.WorkspaceMemberRepository
 import com.example.synclog.workspace.persistence.WorkspaceRepository
 import org.springframework.ai.chat.model.ChatModel
 import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.ai.embedding.EmbeddingModel
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.socket.CloseStatus
 import java.time.LocalDateTime
 
 @Service
@@ -23,8 +28,10 @@ class DocumentService(
     private val documentRepository: DocumentRepository,
     private val documentContentRepository: DocumentContentRepository,
     private val workspaceRepository: WorkspaceRepository,
+    private val workspaceMemberRepository: WorkspaceMemberRepository,
     private val embeddingModel: EmbeddingModel,
     private val chatModel: ChatModel,
+    private val documentManager: DocumentManager,
 ) {
     @Transactional
     fun createDocument(workspaceId: Long): DocumentSimpleResponse {
@@ -131,5 +138,30 @@ class DocumentService(
 
         val response = chatModel.call(prompt)
         return DocumentRagResponse(response.result.output.content)
+    }
+
+    @Transactional
+    fun deleteDocument(
+        documentId: Long,
+        userId: String,
+    ) {
+        val document = documentRepository.findById(documentId).orElseThrow { DocumentNotFoundException() }
+        val member =
+            workspaceMemberRepository.findByUserIdAndWorkspaceId(
+                userId,
+                document.workspace.id!!,
+            ) ?: throw MemberNotFoundException()
+
+        if (member.role > WorkspaceRole.ADMIN) {
+            throw NotEnoughRoleException()
+        }
+
+        documentManager.getSessions(documentId).forEach { session ->
+            if (session.isOpen) {
+                session.close(CloseStatus.NORMAL.withReason("Documet deleted"))
+            }
+        }
+        documentManager.clearResource(documentId)
+        documentRepository.delete(document)
     }
 }

@@ -2,6 +2,7 @@ package com.example.synclog.document.controller
 
 import com.example.synclog.document.service.DocumentService
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -64,5 +65,14 @@ class DocumentController(
     ): ResponseEntity<DocumentRagResponse> {
         val response = documentService.rag(documentId, request.request)
         return ResponseEntity.ok(response)
+    }
+
+    @DeleteMapping("/{documentId}/delete")
+    fun deleteDocument(
+        @RequestAttribute("userId") userId: String,
+        @PathVariable documentId: Long,
+    ): ResponseEntity<Unit> {
+        documentService.deleteDocument(documentId, userId)
+        return ResponseEntity.ok().build()
     }
 }

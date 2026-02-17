@@ -21,6 +21,7 @@ class DocumentSocketHandler(
         docManager.addSession(docId, session)
 
         // 1. DB에서 full binary 가져오기
+        if (!documentContentRepository.existsById(docId)) throw DocumentNotFoundException()
         val initialState = documentContentRepository.findById(docId).getOrNull()?.yjsBinary
 
         // 2. 데이터가 있다면 클라이언트에게 전송

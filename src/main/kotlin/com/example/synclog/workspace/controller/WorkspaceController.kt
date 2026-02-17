@@ -2,6 +2,7 @@ package com.example.synclog.workspace.controller
 
 import com.example.synclog.workspace.service.WorkspaceService
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -57,6 +58,15 @@ class WorkspaceController(
         @RequestBody request: InviteRequest,
     ): ResponseEntity<Unit> {
         workspaceService.inviteMember(userId, workspaceId, request)
+        return ResponseEntity.ok().build()
+    }
+
+    @DeleteMapping("/{workspaceId}/delete")
+    fun deleteWorkspace(
+        @RequestAttribute("userId") userId: String,
+        @PathVariable workspaceId: Long,
+    ): ResponseEntity<Unit> {
+        workspaceService.deleteWorkspace(userId, workspaceId)
         return ResponseEntity.ok().build()
     }
 }

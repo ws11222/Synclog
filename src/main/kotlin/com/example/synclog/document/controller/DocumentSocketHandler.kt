@@ -37,6 +37,8 @@ class DocumentSocketHandler(
         val docId = getDocId(session)
         val payload = message.payload.array()
 
+        val messageType = message.payload[0].toInt()
+
         // [Relay] 나를 제외한 같은 방 사람들에게 전송
         docManager.getSessions(docId).forEach { s ->
             if (s.isOpen && s.id != session.id) {
@@ -45,7 +47,9 @@ class DocumentSocketHandler(
         }
 
         // [Buffer] 나중에 DB에 저장할 수 있도록 메모리에 임시 보관
-        docManager.appendUpdate(docId, payload)
+        if (messageType == 0) {
+            docManager.appendUpdate(docId, payload)
+        }
     }
 
     // 3. 연결이 끊겼을 때

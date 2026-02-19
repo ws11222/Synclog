@@ -1,6 +1,7 @@
 package com.example.synclog.document.controller
 
 import com.example.synclog.document.persistence.Document
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 data class DocumentSimpleResponse(
@@ -40,4 +41,14 @@ data class DocumentRagRequest(
 
 data class DocumentRagResponse(
     val response: String,
+)
+
+data class DocumentTaskResponse(
+    val response: List<SingleTask>,
+)
+
+data class SingleTask(
+    val title: String,
+    val name: String?,
+    val date: LocalDate?,
 )

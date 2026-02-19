@@ -75,4 +75,13 @@ class DocumentController(
         documentService.deleteDocument(documentId, userId)
         return ResponseEntity.ok().build()
     }
+
+    @GetMapping("/{documentId}/tasks")
+    fun getTasks(
+        @RequestAttribute("userId") userId: String,
+        @PathVariable documentId: Long,
+    ): ResponseEntity<DocumentTaskResponse> {
+        val response = documentService.getTasks(userId, documentId)
+        return ResponseEntity.ok(response)
+    }
 }

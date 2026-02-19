@@ -7,6 +7,7 @@ import com.example.synclog.common.exception.WorkspaceNotFoundException
 import com.example.synclog.document.controller.DocumentMetadataResponse
 import com.example.synclog.document.controller.DocumentRagResponse
 import com.example.synclog.document.controller.DocumentSimpleResponse
+import com.example.synclog.document.controller.DocumentTaskResponse
 import com.example.synclog.document.controller.DocumentTitleRequest
 import com.example.synclog.document.persistence.Document
 import com.example.synclog.document.persistence.DocumentContent
@@ -15,6 +16,9 @@ import com.example.synclog.document.persistence.DocumentRepository
 import com.example.synclog.workspace.controller.WorkspaceRole
 import com.example.synclog.workspace.persistence.WorkspaceMemberRepository
 import com.example.synclog.workspace.persistence.WorkspaceRepository
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.springframework.ai.chat.model.ChatModel
 import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.ai.embedding.EmbeddingModel
@@ -163,5 +167,60 @@ class DocumentService(
         }
         documentManager.clearResource(documentId)
         documentRepository.delete(document)
+    }
+
+    @Transactional
+    fun getTasks(
+        userId: String,
+        documentId: Long,
+    ): DocumentTaskResponse {
+        val content = documentContentRepository.findById(documentId).orElseThrow { DocumentNotFoundException() }
+        val prompt: Prompt =
+            Prompt(
+                """
+                너는 회의록 분석 전문가야. [회의록 내용]을 보고 [출력 형식]에 맞는 데이터를 추출해줘. 
+                추출할 작업이 없으면 {"response": []}를 반환해줘. 
+                Return ONLY JSON. No talk. No explanation.
+                
+                [출력 형식]:
+                반드시 아래 JSON 스키마를 따르는 유효한 JSON 데이터만 응답해줘. 다른 설명은 생략해.
+
+                JSON
+                {
+                  "response": [
+                    {
+                      "title": "할 일 내용",
+                      "name": "담당자 이름(없으면 null)",
+                      "date": "2026-02-19 (ISO_LOCAL_DATE 형식, 없으면 null)"
+                    }
+                  ]
+                }
+                
+                [회의록 내용]
+                ${content.plainText}
+                
+                답변:
+                """.trimIndent(),
+            )
+
+        val response = chatModel.call(prompt).result.output.content
+        val objectMapper =
+            ObjectMapper()
+                .registerKotlinModule()
+                .registerModule(JavaTimeModule())
+
+        return try {
+            val cleanedJson =
+                response
+                    .substringAfter("```json")
+                    .substringAfter("```")
+                    .substringBeforeLast("```")
+                    .trim()
+
+            objectMapper.readValue(cleanedJson, DocumentTaskResponse::class.java)
+        } catch (e: Exception) {
+            println("Parsing Error: ${e.message} | Raw Content: $response")
+            DocumentTaskResponse(response = emptyList())
+        }
     }
 }

@@ -57,7 +57,7 @@ class DocumentController(
         return ResponseEntity.ok(metadata)
     }
 
-    @GetMapping("/{documentId}/rag")
+    @PostMapping("/{documentId}/rag")
     fun ragDocument(
         @RequestAttribute("userId") userId: String,
         @PathVariable documentId: Long,

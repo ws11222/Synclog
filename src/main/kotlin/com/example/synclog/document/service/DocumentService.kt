@@ -52,7 +52,7 @@ class DocumentService(
 
         val newContent = DocumentContent(document = document, plainText = "", yjsBinary = ByteArray(0), embedding = null)
         document.content = newContent
-        documentContentRepository.save(newContent)
+        documentRepository.save(document)
         return DocumentSimpleResponse.fromEntity(document)
     }
 

@@ -36,9 +36,12 @@ class DocumentSocketHandler(
         message: BinaryMessage,
     ) {
         val docId = getDocId(session)
-        val payload = message.payload.array()
+        val payload = message.payload
+        val bytes = payload.array()
 
-        val messageType = message.payload[0].toInt()
+        if (bytes.isEmpty()) return
+
+        val messageType = bytes[0].toInt()
 
         // [Relay] 나를 제외한 같은 방 사람들에게 전송
         docManager.getSessions(docId).forEach { s ->
@@ -49,7 +52,7 @@ class DocumentSocketHandler(
 
         // [Buffer] 나중에 DB에 저장할 수 있도록 메모리에 임시 보관
         if (messageType == 0) {
-            docManager.appendUpdate(docId, payload)
+            docManager.appendUpdate(docId, bytes)
         }
     }
 

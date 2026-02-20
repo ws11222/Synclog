@@ -24,7 +24,6 @@ import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.ai.embedding.EmbeddingModel
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.socket.CloseStatus
 import java.time.LocalDateTime
 
 @Service
@@ -35,7 +34,6 @@ class DocumentService(
     private val workspaceMemberRepository: WorkspaceMemberRepository,
     private val embeddingModel: EmbeddingModel,
     private val chatModel: ChatModel,
-    private val documentManager: DocumentManager,
 ) {
     @Transactional
     fun createDocument(workspaceId: Long): DocumentSimpleResponse {
@@ -48,7 +46,7 @@ class DocumentService(
                 updatedAt = LocalDateTime.now(),
             )
 
-        val newContent = DocumentContent(document = document, plainText = "", yjsBinary = ByteArray(0), embedding = null)
+        val newContent = DocumentContent(document = document, plainText = "", yjsBinary = "", embedding = null)
         document.content = newContent
         documentRepository.save(document)
         return DocumentSimpleResponse.fromEntity(document)
@@ -58,7 +56,7 @@ class DocumentService(
     fun saveFullSnapshot(
         docId: Long,
         text: String,
-        fullBinary: ByteArray,
+        fullBinary: String,
     ) {
         val document = documentRepository.findById(docId).orElseThrow { DocumentNotFoundException() }
         document.updatedAt = LocalDateTime.now()
@@ -85,10 +83,12 @@ class DocumentService(
     @Transactional
     fun getMetadata(documentId: Long): DocumentMetadataResponse {
         val document = documentRepository.findById(documentId).orElseThrow { DocumentNotFoundException() }
+        val content = documentContentRepository.findById(documentId).orElseThrow { DocumentNotFoundException() }
         return DocumentMetadataResponse(
             documentId = document.id!!,
             title = document.title,
             workspaceName = document.workspace.title,
+            fullBinary = content.yjsBinary,
         )
     }
 
@@ -98,12 +98,14 @@ class DocumentService(
         request: DocumentTitleRequest,
     ): DocumentMetadataResponse {
         val document = documentRepository.findById(documentId).orElseThrow { DocumentNotFoundException() }
+        val content = documentContentRepository.findById(documentId).orElseThrow { DocumentNotFoundException() }
         document.title = request.title
         document.updatedAt = LocalDateTime.now()
         return DocumentMetadataResponse(
             documentId = document.id!!,
             title = document.title,
             workspaceName = document.workspace.title,
+            fullBinary = content.yjsBinary,
         )
     }
 
@@ -158,12 +160,6 @@ class DocumentService(
             throw NotEnoughRoleException()
         }
 
-        documentManager.getSessions(documentId).forEach { session ->
-            if (session.isOpen) {
-                session.close(CloseStatus.NORMAL.withReason("Documet deleted"))
-            }
-        }
-        documentManager.clearResource(documentId)
         documentRepository.delete(document)
     }
 

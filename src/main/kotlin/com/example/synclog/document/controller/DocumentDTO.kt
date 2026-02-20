@@ -24,6 +24,7 @@ data class DocumentMetadataResponse(
     val documentId: Long,
     val title: String,
     val workspaceName: String,
+    val fullBinary: String?,
 )
 
 data class DocumentTitleRequest(

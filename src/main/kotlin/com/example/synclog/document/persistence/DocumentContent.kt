@@ -23,8 +23,7 @@ class DocumentContent(
     val document: Document,
     @Column(columnDefinition = "TEXT")
     var plainText: String? = null,
-    @Column(columnDefinition = "BYTEA")
-    var yjsBinary: ByteArray? = null,
+    var yjsBinary: String? = null,
     @JdbcTypeCode(SqlTypes.VECTOR)
     @Column(name = "embedding", columnDefinition = "vector(1024)")
     @Array(length = 1024)

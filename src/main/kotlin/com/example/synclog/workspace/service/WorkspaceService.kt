@@ -5,7 +5,6 @@ import com.example.synclog.common.exception.NotEnoughRoleException
 import com.example.synclog.common.exception.UserNotFoundException
 import com.example.synclog.common.exception.WorkspaceNotFoundException
 import com.example.synclog.document.controller.DocumentSimpleResponse
-import com.example.synclog.document.service.DocumentManager
 import com.example.synclog.user.persistence.UserRepository
 import com.example.synclog.workspace.controller.CreateWorkspaceRequest
 import com.example.synclog.workspace.controller.InviteRequest
@@ -19,7 +18,6 @@ import com.example.synclog.workspace.persistence.WorkspaceMemberRepository
 import com.example.synclog.workspace.persistence.WorkspaceRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.socket.CloseStatus
 import java.time.LocalDateTime
 
 @Service
@@ -27,7 +25,6 @@ class WorkspaceService(
     private val workspaceRepository: WorkspaceRepository,
     private val userRepository: UserRepository,
     private val workspaceMemberRepository: WorkspaceMemberRepository,
-    private val documentManager: DocumentManager,
 ) {
     @Transactional
     fun createWorkspace(
@@ -121,15 +118,6 @@ class WorkspaceService(
 
         if (member.role > WorkspaceRole.OWNER) {
             throw NotEnoughRoleException()
-        }
-        workspace.documents.forEach { document ->
-            val documentId = document.id!!
-            documentManager.getSessions(documentId).forEach { session ->
-                if (session.isOpen) {
-                    session.close(CloseStatus.NORMAL.withReason("Documet deleted"))
-                }
-            }
-            documentManager.clearResource(documentId)
         }
         workspaceRepository.delete(workspace)
     }

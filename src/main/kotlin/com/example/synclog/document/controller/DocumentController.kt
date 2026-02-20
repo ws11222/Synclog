@@ -33,8 +33,7 @@ class DocumentController(
         @PathVariable documentId: Long,
         @RequestBody request: DocumentSnapshotRequest,
     ): ResponseEntity<Unit> {
-        val decodedBinary = java.util.Base64.getMimeDecoder().decode(request.fullBinary)
-        documentService.saveFullSnapshot(documentId, request.plainText, decodedBinary)
+        documentService.saveFullSnapshot(documentId, request.plainText, request.fullBinary)
         return ResponseEntity.ok().build()
     }
 

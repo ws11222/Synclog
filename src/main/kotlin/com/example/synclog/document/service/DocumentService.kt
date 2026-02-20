@@ -40,15 +40,12 @@ class DocumentService(
     @Transactional
     fun createDocument(workspaceId: Long): DocumentSimpleResponse {
         val workspace = workspaceRepository.findById(workspaceId).orElseThrow { WorkspaceNotFoundException() }
-        val document =
-            documentRepository.save(
-                Document(
-                    title = "새 문서",
-                    workspace = workspace,
-                    createdAt = LocalDateTime.now(),
-                    updatedAt = LocalDateTime.now(),
-                ),
-            )
+        val document = Document(
+            title = "새 문서",
+            workspace = workspace,
+            createdAt = LocalDateTime.now(),
+            updatedAt = LocalDateTime.now(),
+        )
 
         val newContent = DocumentContent(document = document, plainText = "", yjsBinary = ByteArray(0), embedding = null)
         document.content = newContent

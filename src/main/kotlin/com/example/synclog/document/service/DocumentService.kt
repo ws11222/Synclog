@@ -46,7 +46,7 @@ class DocumentService(
                 updatedAt = LocalDateTime.now(),
             )
 
-        val newContent = DocumentContent(document = document, plainText = "", yjsBinary = "", embedding = null)
+        val newContent = DocumentContent(document = document, plainText = "", yjsBinary = ByteArray(0), embedding = null)
         document.content = newContent
         documentRepository.save(document)
         return DocumentSimpleResponse.fromEntity(document)
@@ -56,7 +56,7 @@ class DocumentService(
     fun saveFullSnapshot(
         docId: Long,
         text: String,
-        fullBinary: String,
+        fullBinary: ByteArray,
     ) {
         val document = documentRepository.findById(docId).orElseThrow { DocumentNotFoundException() }
         document.updatedAt = LocalDateTime.now()
@@ -88,7 +88,7 @@ class DocumentService(
             documentId = document.id!!,
             title = document.title,
             workspaceName = document.workspace.title,
-            fullBinary = content.yjsBinary,
+            fullBinary = java.util.Base64.getMimeEncoder().encodeToString(content.yjsBinary),
         )
     }
 
@@ -105,7 +105,7 @@ class DocumentService(
             documentId = document.id!!,
             title = document.title,
             workspaceName = document.workspace.title,
-            fullBinary = content.yjsBinary,
+            fullBinary = java.util.Base64.getMimeEncoder().encodeToString(content.yjsBinary),
         )
     }
 

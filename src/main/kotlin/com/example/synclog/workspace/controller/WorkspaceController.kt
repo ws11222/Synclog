@@ -69,4 +69,14 @@ class WorkspaceController(
         workspaceService.deleteWorkspace(userId, workspaceId)
         return ResponseEntity.ok().build()
     }
+
+    @DeleteMapping("/{workspaceId}/delete/{targetUserId}")
+    fun deleteMember(
+        @RequestAttribute("userId") userId: String,
+        @PathVariable workspaceId: Long,
+        @PathVariable targetUserId: String,
+    ): ResponseEntity<Unit> {
+        workspaceService.deleteMember(userId, workspaceId, targetUserId)
+        return ResponseEntity.ok().build()
+    }
 }

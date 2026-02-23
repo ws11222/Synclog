@@ -121,4 +121,19 @@ class WorkspaceService(
         }
         workspaceRepository.delete(workspace)
     }
+
+    @Transactional
+    fun deleteMember(
+        userId: String,
+        workspaceId: Long,
+        targetUserId: String,
+    ) {
+        val requester = workspaceMemberRepository.findByUserIdAndWorkspaceId(userId, workspaceId) ?: throw MemberNotFoundException()
+        val target = workspaceMemberRepository.findByUserIdAndWorkspaceId(targetUserId, workspaceId) ?: throw MemberNotFoundException()
+
+        if (requester.role > target.role || requester.role == WorkspaceRole.MEMBER || target.role == WorkspaceRole.OWNER) {
+            throw NotEnoughRoleException()
+        }
+        workspaceMemberRepository.delete(target)
+    }
 }

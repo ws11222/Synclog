@@ -204,13 +204,13 @@ class DocumentService(
                 .registerModule(JavaTimeModule())
 
         return try {
-            val cleanedJson =
-                response
-                    .substringAfter("```json")
-                    .substringAfter("```")
-                    .substringBeforeLast("```")
-                    .trim()
-
+            var cleanedJson =
+                if (response.contains("```json")) {
+                    response.substringAfter("```json")
+                } else {
+                    response.substringAfter("```")
+                }
+            cleanedJson = cleanedJson.substringBeforeLast("```").trim()
             objectMapper.readValue(cleanedJson, DocumentTaskResponse::class.java)
         } catch (e: Exception) {
             println("Parsing Error: ${e.message} | Raw Content: $response")

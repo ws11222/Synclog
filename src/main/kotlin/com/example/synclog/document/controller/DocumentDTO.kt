@@ -42,6 +42,8 @@ data class DocumentRagRequest(
 
 data class DocumentRagResponse(
     val response: String,
+    val refId: Long?,
+    val refTitle: String?,
 )
 
 data class DocumentTaskResponse(

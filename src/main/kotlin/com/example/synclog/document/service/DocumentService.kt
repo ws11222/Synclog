@@ -122,13 +122,21 @@ class DocumentService(
                 3,
             )
 
-        val context = similarContents.joinToString(separator = "\n\n") { it.plainText!! }
+        val context =
+            similarContents.joinToString(separator = "\n\n") { content ->
+                "문서ID: ${content.document.id}\n문서제목: ${content.document.title}\n내용: ${content.plainText}"
+            }
 
         val prompt: Prompt =
             Prompt(
                 """
                 너는 회의록 분석 전문가야. 아래 제공된 [회의록 내용]을 바탕으로 사용자의 [질문]에 대해 답변해줘.
-                만약 답변을 위한 정보가 회의록 내용에 없다면, "관련 내용을 찾을 수 없습니다"라고 답해줘.
+                
+                [규칙]
+                1. 반드시 제공된 [회의록 내용]만 참고하여 답변할 것.
+                2. 답변 끝에 반드시 참고한 문서의 ID를 "출처ID: 숫자" 형식으로 한 줄 추가할 것. 
+                3. 만약 여러 문서를 참고했다면 가장 관련이 깊은 문서 ID 하나만 적을 것.
+                4. 관련 내용을 찾을 수 없다면 "관련 내용을 찾을 수 없습니다"라고 답하고 출처ID는 적지 말 것.
                 
                 [회의록 내용]
                 $context
@@ -140,8 +148,27 @@ class DocumentService(
                 """.trimIndent(),
             )
 
-        val response = chatModel.call(prompt)
-        return DocumentRagResponse(response.result.output.content)
+        val chatResponse = chatModel.call(prompt).result.output.content
+
+        // 정규표현식으로 출처 ID 추출
+        val refIdRegex = "출처ID:\\s*(\\d+)".toRegex()
+        val matchResult = refIdRegex.find(chatResponse)
+        val refId = matchResult?.groupValues?.get(1)?.toLongOrNull()
+
+        // 답변 본문에서 출처 표시 부분 제
+        val finalResponse = chatResponse.replace(refIdRegex, "").trim()
+
+        // ID가 있다면 제목을 찾아오기
+        var refTitle: String? = null
+        if (refId != null) {
+            refTitle = documentRepository.findById(refId).map { it.title }.orElse(null)
+        }
+
+        return DocumentRagResponse(
+            response = finalResponse,
+            refId = refId,
+            refTitle = refTitle,
+        )
     }
 
     @Transactional

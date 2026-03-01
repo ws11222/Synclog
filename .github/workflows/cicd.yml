@@ -77,15 +77,17 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           envs: GITHUB_SHA
           script: |
-            sudo docker stop $(sudo docker ps -q)
-            sudo docker rm $(sudo docker ps -aq)
+            sudo docker stop synclog || true
+            sudo docker rm synclog || true
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/synclog
             
-            sudo docker run -d --name synclog -p 8080:8080 \
+            sudo docker run -d --name synclog \
+              -p 8080:8080 \
+              -p 8081:8081 \
               -e JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
               -e DB_URL='${{ secrets.DB_URL }}' \
               -e DB_USERNAME='${{ secrets.DB_USERNAME }}' \
               -e DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
               -e HF_API_KEY='${{ secrets.HF_API_KEY }}' \
               ${{ secrets.DOCKER_USERNAME }}/synclog
-            sudo docker system prune -a -f --volumes
+            sudo docker image prune -f

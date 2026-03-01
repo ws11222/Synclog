@@ -48,6 +48,10 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
     implementation("org.hibernate.orm:hibernate-vector:6.6.29.Final")
 
+    // Monitor
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-registry-prometheus")
+
     // Test
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")

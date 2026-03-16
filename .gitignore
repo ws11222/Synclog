@@ -16,6 +16,7 @@ build/
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
+.DS_Store
 
 ### IntelliJ IDEA ###
 .idea
@@ -42,5 +43,6 @@ out/
 ### env ###
 .env
 
-### gemini cli ###
-GEMINI.md
+### ai ###
+AGENTS.md
+skills

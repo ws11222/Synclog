@@ -19,6 +19,8 @@ import com.example.synclog.workspace.persistence.WorkspaceRepository
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.ai.chat.model.ChatModel
 import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.ai.embedding.EmbeddingModel
@@ -35,6 +37,8 @@ class DocumentService(
     private val embeddingModel: EmbeddingModel,
     private val chatModel: ChatModel,
 ) {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     @Transactional
     fun createDocument(workspaceId: Long): DocumentSimpleResponse {
         val workspace = workspaceRepository.findById(workspaceId).orElseThrow { WorkspaceNotFoundException() }
@@ -58,6 +62,7 @@ class DocumentService(
         text: String,
         fullBinary: ByteArray,
     ) {
+        val totalStart = System.nanoTime()
         val document = documentRepository.findById(docId).orElseThrow { DocumentNotFoundException() }
         document.updatedAt = LocalDateTime.now()
         val content =
@@ -69,15 +74,30 @@ class DocumentService(
                 }
 
         val isTextChanged = content.plainText != text
+        var embedMs: Long? = null
 
         content.plainText = text
         content.yjsBinary = fullBinary
 
         // 변화가 생기면 plainText를 embedding으로 변환하여 저장
         if (isTextChanged && text.isNotBlank()) {
+            val embedStart = System.nanoTime()
             content.embedding = embeddingModel.embed(text)
+            embedMs = elapsedMs(embedStart)
         }
+        val persistStart = System.nanoTime()
         documentContentRepository.save(content)
+        val persistMs = elapsedMs(persistStart)
+
+        logger.info(
+            "traceId={} op=document.snapshot docId={} totalMs={} embedMs={} persistMs={} textChanged={}",
+            traceId(),
+            docId,
+            elapsedMs(totalStart),
+            embedMs,
+            persistMs,
+            isTextChanged,
+        )
     }
 
     @Transactional
@@ -114,13 +134,19 @@ class DocumentService(
         documentId: Long,
         request: String,
     ): DocumentRagResponse {
+        val totalStart = System.nanoTime()
         val document = documentRepository.findById(documentId).orElseThrow { DocumentNotFoundException() }
+        val embedStart = System.nanoTime()
+        val requestEmbedding = embeddingModel.embed(request)
+        val embedMs = elapsedMs(embedStart)
+        val searchContextStart = System.nanoTime()
         val similarContents =
             documentContentRepository.findSimilarContents(
                 document.workspace.id!!,
-                embeddingModel.embed(request),
+                requestEmbedding,
                 3,
             )
+        val searchContextMs = elapsedMs(searchContextStart)
 
         val context =
             similarContents.joinToString(separator = "\n\n") { content ->
@@ -148,7 +174,9 @@ class DocumentService(
                 """.trimIndent(),
             )
 
+        val aiCallStart = System.nanoTime()
         val chatResponse = chatModel.call(prompt).result.output.content
+        val aiCallMs = elapsedMs(aiCallStart)
 
         // 정규표현식으로 출처 ID 추출
         val refIdRegex = "출처ID:\\s*(\\d+)".toRegex()
@@ -160,15 +188,32 @@ class DocumentService(
 
         // ID가 있다면 제목을 찾아오기
         var refTitle: String? = null
+        var refLookupMs: Long? = null
         if (refId != null) {
+            val refLookupStart = System.nanoTime()
             refTitle = documentRepository.findById(refId).map { it.title }.orElse(null)
+            refLookupMs = elapsedMs(refLookupStart)
         }
 
-        return DocumentRagResponse(
-            response = finalResponse,
-            refId = refId,
-            refTitle = refTitle,
+        val response =
+            DocumentRagResponse(
+                response = finalResponse,
+                refId = refId,
+                refTitle = refTitle,
+            )
+
+        logger.info(
+            "traceId={} op=document.rag docId={} totalMs={} embedMs={} searchContextMs={} aiCallMs={} refLookupMs={}",
+            traceId(),
+            documentId,
+            elapsedMs(totalStart),
+            embedMs,
+            searchContextMs,
+            aiCallMs,
+            refLookupMs,
         )
+
+        return response
     }
 
     @Transactional
@@ -195,6 +240,7 @@ class DocumentService(
         userId: String,
         documentId: Long,
     ): DocumentTaskResponse {
+        val totalStart = System.nanoTime()
         val content = documentContentRepository.findById(documentId).orElseThrow { DocumentNotFoundException() }
         val prompt: Prompt =
             Prompt(
@@ -224,7 +270,9 @@ class DocumentService(
                 """.trimIndent(),
             )
 
+        val aiExtractStart = System.nanoTime()
         val response = chatModel.call(prompt).result.output.content
+        val aiExtractMs = elapsedMs(aiExtractStart)
         val objectMapper =
             ObjectMapper()
                 .registerKotlinModule()
@@ -238,10 +286,36 @@ class DocumentService(
                     response.substringAfter("```")
                 }
             cleanedJson = cleanedJson.substringBeforeLast("```").trim()
-            objectMapper.readValue(cleanedJson, DocumentTaskResponse::class.java)
+            val parseStart = System.nanoTime()
+            val taskResponse = objectMapper.readValue(cleanedJson, DocumentTaskResponse::class.java)
+            val parseMs = elapsedMs(parseStart)
+
+            logger.info(
+                "traceId={} op=document.tasks docId={} totalMs={} aiExtractMs={} parseMs={}",
+                traceId(),
+                documentId,
+                elapsedMs(totalStart),
+                aiExtractMs,
+                parseMs,
+            )
+
+            taskResponse
         } catch (e: Exception) {
+            logger.warn(
+                "traceId={} op=document.tasks.parse-failed docId={} totalMs={} aiExtractMs={} message={}",
+                traceId(),
+                documentId,
+                elapsedMs(totalStart),
+                aiExtractMs,
+                e.message,
+            )
+
             println("Parsing Error: ${e.message} | Raw Content: $response")
             DocumentTaskResponse(response = emptyList())
         }
     }
+
+    private fun elapsedMs(startNano: Long): Long = (System.nanoTime() - startNano) / 1_000_000
+
+    private fun traceId(): String = MDC.get("traceId") ?: MDC.get("trace_id") ?: "missing"
 }

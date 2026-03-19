@@ -46,3 +46,6 @@ out/
 ### ai ###
 AGENTS.md
 skills
+
+### k6 ###
+k6/

@@ -13,9 +13,6 @@ AI 기반 회의록/문서 협업 백엔드 프로젝트입니다.
   - [6. 주요 구현 포인트](#6-주요-구현-포인트)
   - [7. 성능 분석 및 운영 관점 개선](#7-성능-분석-및-운영-관점-개선)
   - [8. 배포 구조](#8-배포-구조)
-  - [9. 프로젝트를 통해 고민한 점](#9-프로젝트를-통해-고민한-점)
-  - [10. 한계와 향후 개선](#10-한계와-향후-개선)
-  - [11. 회고](#11-회고)
 
 ## 1. 프로젝트 개요
 
@@ -35,13 +32,6 @@ Synclog는 회의록/문서를 협업 단위인 워크스페이스에 저장하�
 <div>
 <img src="https://img.shields.io/badge/springboot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white">
 <img src="https://img.shields.io/badge/postgresql-4169E1.svg?style=for-the-badge&logo=postgresql&logoColor=white"> 
-</div>
-
-### Monitoring / Performance
-<div>
-<img src="https://img.shields.io/badge/prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white">
-<img src="https://img.shields.io/badge/grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white">
-<img src="https://img.shields.io/badge/k6-7D64FF?style=for-the-badge&logo=k6&logoColor=white">
 </div>
 
 ### Infra / Deployment
@@ -497,72 +487,3 @@ saveFullSnapshot(TEXT_CHANGED=true) API에 동일한 부하를 가했을 때, �
 - [Dockerfile](/Dockerfile)
 - [cicd.yml](/.github/workflows/cicd.yml)
 
-
-## 9. 프로젝트를 통해 고민한 점
-
-### 9.1 외부 AI 의존성을 어디까지 동기적으로 처리할 것인가
-
-AI 기능을 사용자 요청-응답 사이클 안에서 바로 처리하면 사용자 경험은 단순하지만, 외부 provider 지연이 그대로 서비스 응답시간에 전이됩니다.
-
-이 프로젝트에서는 우선 동기 구조를 유지하되:
-
-- timeout
-- 최대 동시 요청 제한
-- 단계별 지연 로그
-
-를 통해 운영 리스크를 줄이는 방향을 선택했습니다.
-
-### 9.2 평균 응답시간보다 최악 구간을 어떻게 관리할 것인가
-
-외부 API가 포함된 서비스는 평균값만으로 상태를 설명하기 어렵습니다.  
-실제 운영에서는 p95/p99, timeout, 실패율이 더 중요하다고 판단했고, 모니터링과 부하 테스트도 이 관점으로 진행했습니다.
-
-### 9.3 비용과 성능 사이의 균형
-
-AI 호출은 응답시간 문제뿐 아니라 비용 문제도 함께 있습니다.  
-그래서 text 변경 시에만 임베딩을 다시 생성하는 방식으로 불필요한 호출을 줄이도록 설계했습니다.
-
-### 9.4 협업 편집 데이터와 AI 백엔드의 경계
-
-코드상 문서 본문은 `plainText`와 `yjsBinary`를 함께 저장하도록 설계되어 있습니다.
-
-- `plainText`
-  - 검색, 태스크 추출, RAG 문맥 생성에 사용
-- `yjsBinary`
-  - 협업 편집 상태 스냅샷 저장에 사용. yjs 서버 다운 시 백업 용도.
-
-즉 문서 편집 자체의 실시간 동기화 데이터와, AI 처리를 위한 텍스트 데이터를 분리해 다루는 구조를 의도했습니다.
-
-관련 코드:
-- [DocumentContent.kt](/src/main/kotlin/com/example/synclog/document/persistence/DocumentContent.kt)
-- [DocumentService.kt](/src/main/kotlin/com/example/synclog/document/service/DocumentService.kt)
-
-## 10. 한계와 향후 개선
-
-- 외부 AI provider 상태에 따라 응답시간 변동성이 큼
-- 현재는 동기 처리 기반이라 장기적으로는 비동기/큐 구조도 검토 가능
-- fallback 응답, circuit breaker, 재시도 정책 세분화 필요
-- 공통 요청 로깅 및 trace correlation 고도화 가능
-- 중앙 로그 수집 스택(Loki/CloudWatch Logs 등) 도입 여지 있음
-- Yjs 서버와 API 서버 간 권한/문서 접근 검증을 더 강하게 연결할 여지 있음
-- Yjs 서버 운영 설정(PM2, Nginx, persistence)을 코드 저장소 수준에서 더 명시적으로 관리할 수 있음
-- 초기 협업 서버 구현에서 확인했듯, CRDT 엔진은 단순 WebSocket relay로 대체할 수 없고 shared type, sync step, awareness lifecycle을 라이브러리 규약에 맞게 유지해야 함
-- 현재 Node 기반 Yjs 서버도 프로세스 메모리 의존성이 남아 있어 장애 복구와 수평 확장 전략은 추가 보완 여지가 있음
-
-## 11. 회고
-
-이 프로젝트를 통해 단순히 API를 구현하는 것만으로는 충분하지 않다는 점을 배웠습니다.  
-특히 AI 기능처럼 외부 의존성이 큰 시스템에서는,
-
-- 어디서 시간이 걸리는지 계측하고
-- 부하가 걸렸을 때 어떤 실패 양상이 나타나는지 관찰하고
-- 장시간 대기를 줄이는 보호 전략을 두는 것
-
-이 실제 서비스 품질에 큰 영향을 준다는 점을 확인했습니다.
-
-또한 협업 편집 서버(Yjs)와 일반 API 서버(Spring Boot)를 분리하면서, 기능 구현뿐 아니라 런타임의 역할 분리와 운영 구조 설계도 중요하다는 점을 체감했습니다.
-
-특히 협업 편집은 "웹소켓으로 바이너리를 주고받으면 된다" 수준의 문제가 아니었습니다.  
-실제로는 Yjs의 sync/awareness 메시지 규약과 Tiptap이 기대하는 `Y.XmlFragment` 구조를 정확히 맞춰야 했고, 이 지점에서 Spring 기반 직접 구현의 한계를 분명히 경험했습니다.
-
-이 경험 이후에는 협업 프로토콜을 애플리케이션 코드에서 임의로 다루기보다, 해당 생태계가 제공하는 런타임과 유틸리티를 중심으로 설계를 가져가는 편이 더 안정적이라는 판단을 하게 되었습니다.
